@@ -1,8 +1,8 @@
 {
-  "private": true,
   "name": "remix-app-template",
-  "description": "",
-  "license": "",
+  "description": "Find any package's repository, now.",
+  "private": true,
+  "license": "MIT",
   "scripts": {
     "build": "remix build",
     "dev": "remix dev",
