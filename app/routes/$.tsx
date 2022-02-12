@@ -1,6 +1,6 @@
 import { LoaderFunction, redirect } from 'remix';
-import { request } from 'undici';
 import urlcat from 'urlcat';
+import request from '~/utils/fetch';
 
 export const loader: LoaderFunction = async ({ params }) => {
   const { body } = await request(
