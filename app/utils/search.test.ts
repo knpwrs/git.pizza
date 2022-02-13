@@ -1,6 +1,7 @@
 import { isString } from 'lodash';
 import search, {
   CratesResponseJson,
+  fetchJson,
   NpmResponseJson,
   ResponseJson,
   searchCrates,
@@ -38,6 +39,7 @@ function spyOnFetch<T>(
 describe('search', () => {
   afterEach(() => {
     jest.restoreAllMocks();
+    fetchJson.clear();
   });
 
   describe('npm', () => {

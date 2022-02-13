@@ -1,17 +1,25 @@
 import { maxBy } from 'lodash';
 import urlcat from 'urlcat';
+import memoize from 'memoizee';
+import ms from 'ms';
 
 export interface SearchResult {
   repo: string;
   timestamp: number;
 }
 
-async function fetchJson<T>(url: string): Promise<T> {
-  const res = await fetch(url);
-  const data = (await res.json()) as T;
+export const fetchJson = memoize(
+  async function fetchJson<T>(url: string): Promise<T> {
+    const res = await fetch(url);
+    const data = (await res.json()) as T;
 
-  return data;
-}
+    return data;
+  },
+  {
+    maxAge: ms('1 day'),
+    promise: true,
+  },
+);
 
 function dateStringToMs(date: string) {
   return new Date(date).getTime();
