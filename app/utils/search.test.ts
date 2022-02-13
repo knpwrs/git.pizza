@@ -13,9 +13,10 @@ import search, {
   searchPypi,
 } from './search';
 
-function spyOnFetch<T extends ResponseJson>(
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function spyOnFetch<T = any>(
   responses: Array<{
-    test: RegExp;
+    test?: RegExp;
     status?: number;
     contentType?: string;
     body: T;
@@ -29,7 +30,7 @@ function spyOnFetch<T extends ResponseJson>(
     }
 
     for (const {
-      test,
+      test = /./,
       status = 200,
       contentType = 'application/json',
       body,
@@ -52,6 +53,20 @@ describe('search', () => {
   afterEach(() => {
     jest.restoreAllMocks();
     fetchJson.clear();
+  });
+
+  describe('fetchJson', () => {
+    test('200 response', async () => {
+      spyOnFetch([{ body: { success: true } }]);
+      const res = await fetchJson('foo');
+      expect(res).toEqual({ success: true });
+    });
+
+    test('404 response', async () => {
+      spyOnFetch([{ status: 404, body: { success: false } }]);
+      const res = await fetchJson('foo');
+      expect(res).toEqual({});
+    });
   });
 
   describe('npm', () => {

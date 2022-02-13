@@ -12,6 +12,11 @@ export interface SearchResult {
 export const fetchJson = memoize(
   async function fetchJson<T>(url: string): Promise<PartialDeep<T>> {
     const res = await fetch(url);
+
+    if (res.status >= 400) {
+      return {} as PartialDeep<T>;
+    }
+
     const data = (await res.json()) as T;
 
     return data as PartialDeep<T>;
