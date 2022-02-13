@@ -2,6 +2,7 @@ import { maxBy } from 'lodash';
 import urlcat from 'urlcat';
 import memoize from 'memoizee';
 import ms from 'ms';
+import type { PartialDeep } from 'type-fest';
 
 export interface SearchResult {
   repo: string;
@@ -9,11 +10,11 @@ export interface SearchResult {
 }
 
 export const fetchJson = memoize(
-  async function fetchJson<T>(url: string): Promise<T> {
+  async function fetchJson<T>(url: string): Promise<PartialDeep<T>> {
     const res = await fetch(url);
     const data = (await res.json()) as T;
 
-    return data;
+    return data as PartialDeep<T>;
   },
   {
     maxAge: ms('1 day'),
@@ -26,7 +27,7 @@ function dateStringToMs(date: string) {
 }
 
 export interface NpmResponseJson {
-  objects: Array<{ package: { date: string; links: { repository?: string } } }>;
+  objects: Array<{ package: { date: string; links: { repository: string } } }>;
 }
 
 export async function searchNpm(text: string): Promise<SearchResult | null> {
@@ -36,9 +37,9 @@ export async function searchNpm(text: string): Promise<SearchResult | null> {
   });
 
   const data = await fetchJson<NpmResponseJson>(url);
-  const pack = data.objects[0]?.package;
+  const pack = data.objects?.[0]?.package;
 
-  return pack && pack.links.repository
+  return pack?.links?.repository && pack?.date
     ? {
         repo: pack.links.repository,
         timestamp: dateStringToMs(pack.date),
@@ -57,9 +58,9 @@ export async function searchCrates(q: string): Promise<SearchResult | null> {
   );
 
   const data = await fetchJson<CratesResponseJson>(url);
-  const crate = data.crates[0];
+  const crate = data.crates?.[0];
 
-  return crate
+  return crate?.repository && crate?.updated_at
     ? {
         repo: crate.repository,
         timestamp: dateStringToMs(crate.updated_at),
@@ -67,11 +68,46 @@ export async function searchCrates(q: string): Promise<SearchResult | null> {
     : null;
 }
 
-export type ResponseJson = NpmResponseJson | CratesResponseJson;
+export type GemsSearchResponseJson = Array<{ name: string }>;
+export type GemsResponseJson = {
+  source_code_uri: string;
+  version_created_at: string;
+};
+
+export async function searchGems(query: string): Promise<SearchResult | null> {
+  const searchUrl = urlcat('https://rubygems.org/api/v1/search.json', {
+    query,
+  });
+
+  const searchData = await fetchJson<GemsSearchResponseJson>(searchUrl);
+  const gem = searchData[0];
+
+  if (!gem) {
+    return null;
+  }
+
+  const gemUrl = urlcat('https://rubygems.org/api/v1/gems/:name.json', {
+    name: gem.name,
+  });
+  const gemData = await fetchJson<GemsResponseJson>(gemUrl);
+
+  return gemData && gemData.source_code_uri && gemData.version_created_at
+    ? {
+        repo: gemData.source_code_uri,
+        timestamp: dateStringToMs(gemData.version_created_at),
+      }
+    : null;
+}
+
+export type ResponseJson =
+  | NpmResponseJson
+  | CratesResponseJson
+  | GemsSearchResponseJson
+  | GemsResponseJson;
 
 export default async function search(text: string) {
   const allRes = (
-    await Promise.all([searchNpm(text), searchCrates(text)])
+    await Promise.all([searchNpm(text), searchCrates(text), searchGems(text)])
   ).filter((el): el is SearchResult => !!el);
 
   return maxBy(allRes, 'timestamp');

@@ -2,14 +2,22 @@ import { isString } from 'lodash';
 import search, {
   CratesResponseJson,
   fetchJson,
+  GemsResponseJson,
+  GemsSearchResponseJson,
   NpmResponseJson,
   ResponseJson,
   searchCrates,
+  searchGems,
   searchNpm,
 } from './search';
 
-function spyOnFetch<T>(
-  responses: Record<string, { status?: number; contentType?: string; body: T }>,
+function spyOnFetch<T extends ResponseJson>(
+  responses: Array<{
+    test: RegExp;
+    status?: number;
+    contentType?: string;
+    body: T;
+  }>,
 ) {
   jest.spyOn(global, 'fetch').mockImplementation((...args) => {
     const url = args[0];
@@ -18,11 +26,13 @@ function spyOnFetch<T>(
       return Promise.reject();
     }
 
-    for (const [
-      key,
-      { status = 200, contentType = 'application/json', body },
-    ] of Object.entries(responses)) {
-      if (url.includes(key)) {
+    for (const {
+      test,
+      status = 200,
+      contentType = 'application/json',
+      body,
+    } of responses) {
+      if (test.test(url)) {
         return Promise.resolve(
           new Response(JSON.stringify(body), {
             status,
@@ -32,7 +42,7 @@ function spyOnFetch<T>(
       }
     }
 
-    return Promise.reject();
+    return Promise.resolve(new Response(JSON.stringify({})));
   });
 }
 
@@ -44,8 +54,9 @@ describe('search', () => {
 
   describe('npm', () => {
     test('searchNpm', async () => {
-      spyOnFetch<NpmResponseJson>({
-        npmjs: {
+      spyOnFetch<NpmResponseJson>([
+        {
+          test: /npmjs\.com/,
           body: {
             objects: [
               {
@@ -57,7 +68,7 @@ describe('search', () => {
             ],
           },
         },
-      });
+      ]);
       expect(await searchNpm('lodash')).toEqual({
         timestamp: 1613835736891,
         repo: 'https://github.com/lodash/lodash',
@@ -71,8 +82,9 @@ describe('search', () => {
 
   describe('crates', () => {
     test('searchCrates', async () => {
-      spyOnFetch<CratesResponseJson>({
-        crates: {
+      spyOnFetch<CratesResponseJson>([
+        {
+          test: /crates\.io/,
           body: {
             crates: [
               {
@@ -82,7 +94,7 @@ describe('search', () => {
             ],
           },
         },
-      });
+      ]);
       expect(await searchCrates('fst')).toEqual({
         timestamp: 1622977231172,
         repo: 'https://github.com/BurntSushi/fst',
@@ -91,10 +103,61 @@ describe('search', () => {
     });
   });
 
+  describe('crates', () => {
+    test('searchCrates', async () => {
+      spyOnFetch<CratesResponseJson>([
+        {
+          test: /crates\.io/,
+          body: {
+            crates: [
+              {
+                updated_at: '2021-06-06T11:00:31.172403+00:00',
+                repository: 'https://github.com/BurntSushi/fst',
+              },
+            ],
+          },
+        },
+      ]);
+      expect(await searchCrates('fst')).toEqual({
+        timestamp: 1622977231172,
+        repo: 'https://github.com/BurntSushi/fst',
+      });
+      expect(global.fetch).toBeCalledTimes(1);
+    });
+  });
+
+  describe('gems', () => {
+    test('searchGems', async () => {
+      spyOnFetch<GemsSearchResponseJson | GemsResponseJson>([
+        {
+          test: /rubygems\.org\/.+\/search/,
+          body: [
+            {
+              name: 'byebug',
+            },
+          ],
+        },
+        {
+          test: /rubygems\.org\/.+\/gems/,
+          body: {
+            version_created_at: '2020-04-23T10:01:33.453Z',
+            source_code_uri: 'https://github.com/deivid-rodriguez/byebug',
+          },
+        },
+      ]);
+      expect(await searchGems('byebug')).toEqual({
+        timestamp: 1587636093453,
+        repo: 'https://github.com/deivid-rodriguez/byebug',
+      });
+      expect(global.fetch).toBeCalledTimes(2);
+    });
+  });
+
   describe('all together', () => {
     test('npm is newest', async () => {
-      spyOnFetch<ResponseJson>({
-        npmjs: {
+      spyOnFetch<ResponseJson>([
+        {
+          test: /npmjs\.com/,
           body: {
             objects: [
               {
@@ -106,7 +169,8 @@ describe('search', () => {
             ],
           },
         },
-        crates: {
+        {
+          test: /crates\.io/,
           body: {
             crates: [
               {
@@ -116,7 +180,7 @@ describe('search', () => {
             ],
           },
         },
-      });
+      ]);
 
       const res = await search('lodash');
 
@@ -125,12 +189,13 @@ describe('search', () => {
         timestamp: 1613835736891,
       });
 
-      expect(global.fetch).toBeCalledTimes(2);
+      expect(global.fetch).toBeCalledTimes(3);
     });
 
     test('crates is newest', async () => {
-      spyOnFetch<ResponseJson>({
-        npmjs: {
+      spyOnFetch<ResponseJson>([
+        {
+          test: /npmjs\.com/,
           body: {
             objects: [
               {
@@ -142,7 +207,8 @@ describe('search', () => {
             ],
           },
         },
-        crates: {
+        {
+          test: /crates\.io/,
           body: {
             crates: [
               {
@@ -152,7 +218,7 @@ describe('search', () => {
             ],
           },
         },
-      });
+      ]);
 
       const res = await search('zxcvbn');
 
@@ -161,7 +227,7 @@ describe('search', () => {
         timestamp: 1633982027159,
       });
 
-      expect(global.fetch).toBeCalledTimes(2);
+      expect(global.fetch).toBeCalledTimes(3);
     });
   });
 });
