@@ -1,4 +1,5 @@
 import { isString } from 'lodash';
+import { JsonValue } from 'type-fest';
 import search, {
   CratesResponseJson,
   fetchJson,
@@ -14,7 +15,7 @@ import search, {
 } from './search';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function spyOnFetch<T = any>(
+function spyOnFetch<T = JsonValue>(
   responses: Array<{
     test?: RegExp;
     status?: number;
