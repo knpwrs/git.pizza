@@ -18,6 +18,7 @@ export const fetchJson = memoize(
   },
   {
     maxAge: ms('1 day'),
+    max: 1000,
     promise: true,
   },
 );
