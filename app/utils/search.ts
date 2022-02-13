@@ -70,10 +70,10 @@ export async function searchCrates(q: string): Promise<SearchResult | null> {
 }
 
 export type GemsSearchResponseJson = Array<{ name: string }>;
-export type GemsResponseJson = {
+export interface GemsResponseJson {
   source_code_uri: string;
   version_created_at: string;
-};
+}
 
 export async function searchGems(query: string): Promise<SearchResult | null> {
   const searchUrl = urlcat('https://rubygems.org/api/v1/search.json', {
@@ -100,15 +100,51 @@ export async function searchGems(query: string): Promise<SearchResult | null> {
     : null;
 }
 
+export interface PypiResponseJson {
+  info: {
+    project_urls: {
+      'Source Code': string;
+    };
+    version: string;
+  };
+  releases: {
+    [key: PypiResponseJson['info']['version']]: Array<{
+      upload_time_iso_8601: string;
+    }>;
+  };
+}
+
+// Pypi doesn't have a search api, the name must be exact
+export async function searchPypi(name: string): Promise<SearchResult | null> {
+  const url = urlcat('https://pypi.org/pypi/:name/json', { name });
+
+  const data = await fetchJson<PypiResponseJson>(url);
+
+  return data.info?.project_urls?.['Source Code'] &&
+    data.info?.version &&
+    data.releases?.[data.info.version]?.[0]?.upload_time_iso_8601
+    ? {
+        repo: data.info.project_urls['Source Code'],
+        timestamp: dateStringToMs(
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          data.releases[data.info.version]![0]!.upload_time_iso_8601!,
+        ),
+      }
+    : null;
+}
+
 export type ResponseJson =
   | NpmResponseJson
   | CratesResponseJson
   | GemsSearchResponseJson
-  | GemsResponseJson;
+  | GemsResponseJson
+  | PypiResponseJson;
 
 export default async function search(text: string) {
   const allRes = (
-    await Promise.all([searchNpm(text), searchCrates(text), searchGems(text)])
+    await Promise.all(
+      [searchNpm, searchCrates, searchGems, searchPypi].map((fn) => fn(text)),
+    )
   ).filter((el): el is SearchResult => !!el);
 
   return maxBy(allRes, 'timestamp');

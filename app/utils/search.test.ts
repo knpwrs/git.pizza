@@ -5,10 +5,12 @@ import search, {
   GemsResponseJson,
   GemsSearchResponseJson,
   NpmResponseJson,
+  PypiResponseJson,
   ResponseJson,
   searchCrates,
   searchGems,
   searchNpm,
+  searchPypi,
 } from './search';
 
 function spyOnFetch<T extends ResponseJson>(
@@ -153,6 +155,36 @@ describe('search', () => {
     });
   });
 
+  describe('pypi', () => {
+    test('searchPypi', async () => {
+      spyOnFetch<PypiResponseJson>([
+        {
+          test: /pypi\.org/,
+          body: {
+            info: {
+              project_urls: {
+                'Source Code': 'https://github.com/pallets/flask/',
+              },
+              version: '2.0.2',
+            },
+            releases: {
+              '2.0.2': [
+                {
+                  upload_time_iso_8601: '2021-10-04T14:34:54.817314Z',
+                },
+              ],
+            },
+          },
+        },
+      ]);
+      expect(await searchPypi('flask')).toEqual({
+        timestamp: 1633358094817,
+        repo: 'https://github.com/pallets/flask/',
+      });
+      expect(global.fetch).toBeCalledTimes(1);
+    });
+  });
+
   describe('all together', () => {
     test('npm is newest', async () => {
       spyOnFetch<ResponseJson>([
@@ -189,7 +221,7 @@ describe('search', () => {
         timestamp: 1613835736891,
       });
 
-      expect(global.fetch).toBeCalledTimes(3);
+      expect(global.fetch).toBeCalledTimes(4);
     });
 
     test('crates is newest', async () => {
@@ -227,7 +259,7 @@ describe('search', () => {
         timestamp: 1633982027159,
       });
 
-      expect(global.fetch).toBeCalledTimes(3);
+      expect(global.fetch).toBeCalledTimes(4);
     });
   });
 });
