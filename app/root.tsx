@@ -9,7 +9,7 @@ import {
 import type { MetaFunction } from 'remix';
 
 export const meta: MetaFunction = () => {
-  return { title: 'New Remix App' };
+  return { title: "git.pizza | Find any package's repository, now." };
 };
 
 export default function App() {
