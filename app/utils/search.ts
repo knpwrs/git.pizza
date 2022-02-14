@@ -145,10 +145,32 @@ export type ResponseJson =
   | GemsResponseJson
   | PypiResponseJson;
 
-export default async function search(text: string) {
+export type Scope = 'any' | 'npm' | 'crates' | 'gems' | 'pypi';
+
+export const scopes: Array<{ label: string; value: Scope }> = [
+  { label: 'Any', value: 'any' },
+  { label: 'NPM', value: 'npm' },
+  { label: 'Rust Crates', value: 'crates' },
+  { label: 'Ruby Gems', value: 'gems' },
+  { label: 'Pypi', value: 'pypi' },
+];
+
+const scopeToFn: Record<
+  Scope,
+  Array<(text: string) => Promise<SearchResult | null>>
+> = {
+  any: [searchNpm, searchCrates, searchGems, searchPypi],
+  npm: [searchNpm],
+  crates: [searchCrates],
+  gems: [searchGems],
+  pypi: [searchPypi],
+};
+
+export default async function search(text: string, scope = 'any') {
   const allRes = (
     await Promise.all(
-      [searchNpm, searchCrates, searchGems, searchPypi].map((fn) => fn(text)),
+      // TODO: cast is temporary until custom scopes are supported
+      scopeToFn[scope as Scope].map((fn) => fn(text)),
     )
   ).filter((el): el is SearchResult => !!el);
 

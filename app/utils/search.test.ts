@@ -121,29 +121,6 @@ describe('search', () => {
     });
   });
 
-  describe('crates', () => {
-    test('searchCrates', async () => {
-      spyOnFetch<CratesResponseJson>([
-        {
-          test: /crates\.io/,
-          body: {
-            crates: [
-              {
-                updated_at: '2021-06-06T11:00:31.172403+00:00',
-                repository: 'https://github.com/BurntSushi/fst',
-              },
-            ],
-          },
-        },
-      ]);
-      expect(await searchCrates('fst')).toEqual({
-        timestamp: 1622977231172,
-        repo: 'https://github.com/BurntSushi/fst',
-      });
-      expect(global.fetch).toBeCalledTimes(1);
-    });
-  });
-
   describe('gems', () => {
     test('searchGems', async () => {
       spyOnFetch<GemsSearchResponseJson | GemsResponseJson>([
@@ -202,80 +179,171 @@ describe('search', () => {
   });
 
   describe('all together', () => {
-    test('npm is newest', async () => {
-      spyOnFetch<ResponseJson>([
-        {
-          test: /npmjs\.com/,
-          body: {
-            objects: [
-              {
-                package: {
-                  date: '2021-02-20T15:42:16.891Z',
-                  links: { repository: 'https://github.com/lodash/lodash' },
+    describe('any', () => {
+      test('npm is newest', async () => {
+        spyOnFetch<ResponseJson>([
+          {
+            test: /npmjs\.com/,
+            body: {
+              objects: [
+                {
+                  package: {
+                    date: '2021-02-20T15:42:16.891Z',
+                    links: { repository: 'https://github.com/lodash/lodash' },
+                  },
                 },
-              },
-            ],
+              ],
+            },
           },
-        },
-        {
-          test: /crates\.io/,
-          body: {
-            crates: [
-              {
-                updated_at: '2016-12-25T14:35:55.101357+00:00',
-                repository: 'meh',
-              },
-            ],
+          {
+            test: /crates\.io/,
+            body: {
+              crates: [
+                {
+                  updated_at: '2016-12-25T14:35:55.101357+00:00',
+                  repository: 'meh',
+                },
+              ],
+            },
           },
-        },
-      ]);
+        ]);
 
-      const res = await search('lodash');
+        const res = await search('lodash');
 
-      expect(res).toEqual({
-        repo: 'https://github.com/lodash/lodash',
-        timestamp: 1613835736891,
+        expect(res).toEqual({
+          repo: 'https://github.com/lodash/lodash',
+          timestamp: 1613835736891,
+        });
+
+        expect(global.fetch).toBeCalledTimes(4);
       });
 
-      expect(global.fetch).toBeCalledTimes(4);
+      test('crates is newest', async () => {
+        spyOnFetch<ResponseJson>([
+          {
+            test: /npmjs\.com/,
+            body: {
+              objects: [
+                {
+                  package: {
+                    date: '2017-02-07T03:58:00.320Z',
+                    links: { repository: 'https://github.com/dropbox/zxcvbn' },
+                  },
+                },
+              ],
+            },
+          },
+          {
+            test: /crates\.io/,
+            body: {
+              crates: [
+                {
+                  updated_at: '2021-10-11T19:53:47.159715+00:00',
+                  repository: 'https://github.com/shssoichiro/zxcvbn-rs',
+                },
+              ],
+            },
+          },
+        ]);
+
+        const res = await search('zxcvbn');
+
+        expect(res).toEqual({
+          repo: 'https://github.com/shssoichiro/zxcvbn-rs',
+          timestamp: 1633982027159,
+        });
+
+        expect(global.fetch).toBeCalledTimes(4);
+      });
     });
 
-    test('crates is newest', async () => {
-      spyOnFetch<ResponseJson>([
-        {
-          test: /npmjs\.com/,
-          body: {
-            objects: [
-              {
-                package: {
-                  date: '2017-02-07T03:58:00.320Z',
-                  links: { repository: 'https://github.com/dropbox/zxcvbn' },
+    describe('scoped', () => {
+      test.each([
+        [
+          'npm',
+          [
+            {
+              body: {
+                objects: [
+                  {
+                    package: {
+                      date: '2021-02-20T15:42:16.891Z',
+                      links: { repository: 'https://github.com/lodash/lodash' },
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+          'https://github.com/lodash/lodash',
+        ],
+        [
+          'crates',
+          [
+            {
+              body: {
+                crates: [
+                  {
+                    updated_at: '2021-06-06T11:00:31.172403+00:00',
+                    repository: 'https://github.com/BurntSushi/fst',
+                  },
+                ],
+              },
+            },
+          ],
+          'https://github.com/BurntSushi/fst',
+        ],
+        [
+          'gems',
+          [
+            {
+              test: /rubygems\.org\/.+\/search/,
+              body: [
+                {
+                  name: 'byebug',
+                },
+              ],
+            },
+            {
+              test: /rubygems\.org\/.+\/gems/,
+              body: {
+                version_created_at: '2020-04-23T10:01:33.453Z',
+                source_code_uri: 'https://github.com/deivid-rodriguez/byebug',
+              },
+            },
+          ],
+          'https://github.com/deivid-rodriguez/byebug',
+        ],
+        [
+          'pypi',
+          [
+            {
+              test: /pypi\.org/,
+              body: {
+                info: {
+                  project_urls: {
+                    'Source Code': 'https://github.com/pallets/flask/',
+                  },
+                  version: '2.0.2',
+                },
+                releases: {
+                  '2.0.2': [
+                    {
+                      upload_time_iso_8601: '2021-10-04T14:34:54.817314Z',
+                    },
+                  ],
                 },
               },
-            ],
-          },
-        },
-        {
-          test: /crates\.io/,
-          body: {
-            crates: [
-              {
-                updated_at: '2021-10-11T19:53:47.159715+00:00',
-                repository: 'https://github.com/shssoichiro/zxcvbn-rs',
-              },
-            ],
-          },
-        },
-      ]);
-
-      const res = await search('zxcvbn');
-
-      expect(res).toEqual({
-        repo: 'https://github.com/shssoichiro/zxcvbn-rs',
-        timestamp: 1633982027159,
+            },
+          ],
+          'https://github.com/pallets/flask/',
+        ],
+      ])('%s', async (scope, spyConf, url) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        spyOnFetch(spyConf as any);
+        const res = await search('__packagename__', scope);
+        expect(res).toMatchObject({ repo: url });
       });
-
-      expect(global.fetch).toBeCalledTimes(4);
     });
   });
 });
