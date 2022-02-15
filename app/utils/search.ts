@@ -145,10 +145,8 @@ export type ResponseJson =
   | GemsResponseJson
   | PypiResponseJson;
 
-export type Scope = 'any' | 'npm' | 'crates' | 'gems' | 'pypi';
-
-export const scopes: Array<{ label: string; value: Scope }> = [
-  { label: 'Any', value: 'any' },
+export const scopes: Array<{ label: string; value: string }> = [
+  { label: 'Any', value: '' },
   { label: 'NPM', value: 'npm' },
   { label: 'Rust Crates', value: 'crates' },
   { label: 'Ruby Gems', value: 'gems' },
@@ -156,23 +154,30 @@ export const scopes: Array<{ label: string; value: Scope }> = [
 ];
 
 const scopeToFn: Record<
-  Scope,
-  Array<(text: string) => Promise<SearchResult | null>>
+  string,
+  (text: string) => Promise<SearchResult | null>
 > = {
-  any: [searchNpm, searchCrates, searchGems, searchPypi],
-  npm: [searchNpm],
-  crates: [searchCrates],
-  gems: [searchGems],
-  pypi: [searchPypi],
+  npm: searchNpm,
+  crates: searchCrates,
+  gems: searchGems,
+  pypi: searchPypi,
 };
 
-export default async function search(text: string, scope = 'any') {
+const scopeToFnEntries = Object.entries(scopeToFn);
+
+export default async function search(name: string, scope = '') {
   const allRes = (
     await Promise.all(
-      // TODO: cast is temporary until custom scopes are supported
-      scopeToFn[scope as Scope].map((fn) => fn(text)),
+      scopeToFnEntries
+        .filter(([key]) => key.startsWith(scope))
+        .map(([, fn]) => fn(name)),
     )
   ).filter((el): el is SearchResult => !!el);
 
-  return maxBy(allRes, 'timestamp');
+  return (
+    (allRes.length > 0 && maxBy(allRes, 'timestamp')) || {
+      repo: urlcat('https://github.com/search', { q: name }),
+      timestamp: Date.now(),
+    }
+  );
 }

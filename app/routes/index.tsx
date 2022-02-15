@@ -4,9 +4,9 @@ import {
   Button,
   Container,
   Group,
-  Input,
   NativeSelect,
   Text,
+  TextInput,
 } from '@mantine/core';
 import { isString } from 'lodash';
 import {
@@ -14,6 +14,7 @@ import {
   Form,
   LinksFunction,
   redirect,
+  useActionData,
   useTransition,
 } from 'remix';
 import sanitize from 'sanitize.css';
@@ -34,7 +35,7 @@ export const links: LinksFunction = () => [
 
 export const action: ActionFunction = async ({ request }) => {
   const data = await request.formData();
-  const scope = data.get('scope');
+  const scope = data.get('scope') ?? '';
   const name = data.get('name');
 
   if (!isString(scope) || !isString(name)) {
@@ -48,6 +49,7 @@ export const action: ActionFunction = async ({ request }) => {
 
 export default function MyApp() {
   const { state } = useTransition();
+  const actionData = useActionData() ?? {};
   const busy = state === 'submitting';
 
   return (
@@ -69,7 +71,12 @@ export default function MyApp() {
       <Form method="post">
         <Group spacing="xs">
           <NativeSelect name="scope" data={scopes} />
-          <Input type="text" name="name" placeholder="Package Name" required />
+          <TextInput
+            name="name"
+            placeholder="Package Name"
+            error={actionData?.nameError}
+            required
+          />
           <Button type="submit" disabled={busy}>
             Go!
           </Button>

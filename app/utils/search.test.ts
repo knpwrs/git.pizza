@@ -255,6 +255,12 @@ describe('search', () => {
 
         expect(global.fetch).toBeCalledTimes(4);
       });
+
+      test('no results goes to github', async () => {
+        spyOnFetch([{ status: 404, body: {} }]);
+        const res = await search('foo');
+        expect(res).toMatchObject({ repo: 'https://github.com/search?q=foo' });
+      });
     });
 
     describe('scoped', () => {
