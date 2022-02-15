@@ -19,6 +19,7 @@ import {
   useTransition,
 } from 'remix';
 import sanitize from 'sanitize.css';
+import GhCorner from '~/components/gh-corner';
 import search, { scopes } from '~/utils/search';
 
 export const links: LinksFunction = () => [
@@ -142,6 +143,7 @@ export default function MyApp() {
           </Anchor>
           .
         </Text>
+        <GhCorner />
       </Container>
     </Box>
   );
