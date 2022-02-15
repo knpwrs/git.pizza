@@ -9,6 +9,7 @@ import {
   TextInput,
 } from '@mantine/core';
 import { isString } from 'lodash';
+import { useState } from 'react';
 import {
   ActionFunction,
   Form,
@@ -48,9 +49,14 @@ export const action: ActionFunction = async ({ request }) => {
 };
 
 export default function MyApp() {
-  const { state } = useTransition();
+  const [scopeValue, setScopeValue] = useState('');
+  const [nameValue, setNameValue] = useState('');
+  const transition = useTransition();
   const actionData = useActionData() ?? {};
-  const busy = state === 'submitting';
+  const busy = transition.state === 'submitting';
+  const url = nameValue
+    ? `https://git.pizza/${scopeValue ? `${scopeValue}/` : ''}${nameValue}`
+    : '';
 
   return (
     <Box
@@ -70,10 +76,17 @@ export default function MyApp() {
       />
       <Form method="post">
         <Group spacing="xs">
-          <NativeSelect name="scope" data={scopes} />
+          <NativeSelect
+            name="scope"
+            data={scopes}
+            value={scopeValue}
+            onChange={(e) => setScopeValue(e.currentTarget.value)}
+          />
           <TextInput
             name="name"
             placeholder="Package Name"
+            value={nameValue}
+            onChange={(e) => setNameValue(e.currentTarget.value)}
             error={actionData?.nameError}
             required
           />
@@ -82,6 +95,15 @@ export default function MyApp() {
           </Button>
         </Group>
       </Form>
+      {url ? (
+        <Container sx={{ paddingTop: 50 }}>
+          <Anchor href={url}>
+            <Text size="lg" weight="bolder">
+              {url}
+            </Text>
+          </Anchor>
+        </Container>
+      ) : null}
       <Container
         size="sm"
         padding="sm"
