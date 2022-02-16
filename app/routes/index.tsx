@@ -8,8 +8,8 @@ import {
   Text,
   TextInput,
 } from '@mantine/core';
+import { useInputState } from '@mantine/hooks';
 import { isString } from 'lodash';
-import { useState } from 'react';
 import {
   ActionFunction,
   Form,
@@ -50,8 +50,8 @@ export const action: ActionFunction = async ({ request }) => {
 };
 
 export default function MyApp() {
-  const [scopeValue, setScopeValue] = useState('');
-  const [nameValue, setNameValue] = useState('');
+  const [scopeValue, setScopeValue] = useInputState('');
+  const [nameValue, setNameValue] = useInputState('');
   const transition = useTransition();
   const actionData = useActionData() ?? {};
   const busy = transition.state === 'submitting';
@@ -81,13 +81,13 @@ export default function MyApp() {
             name="scope"
             data={scopes}
             value={scopeValue}
-            onChange={(e) => setScopeValue(e.currentTarget.value)}
+            onChange={setScopeValue}
           />
           <TextInput
             name="name"
             placeholder="Package Name"
             value={nameValue}
-            onChange={(e) => setNameValue(e.currentTarget.value)}
+            onChange={setNameValue}
             error={actionData?.nameError}
             required
           />
