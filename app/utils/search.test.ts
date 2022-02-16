@@ -263,88 +263,88 @@ describe('search', () => {
       });
     });
 
-    describe('scoped', () => {
-      test.each([
+    describe.each([
+      [
+        ['npm', 'np', 'types', 'javas'],
         [
-          'npm',
-          [
-            {
-              body: {
-                objects: [
-                  {
-                    package: {
-                      date: '2021-02-20T15:42:16.891Z',
-                      links: { repository: 'https://github.com/lodash/lodash' },
-                    },
-                  },
-                ],
-              },
-            },
-          ],
-          'https://github.com/lodash/lodash',
-        ],
-        [
-          'crates',
-          [
-            {
-              body: {
-                crates: [
-                  {
-                    updated_at: '2021-06-06T11:00:31.172403+00:00',
-                    repository: 'https://github.com/BurntSushi/fst',
-                  },
-                ],
-              },
-            },
-          ],
-          'https://github.com/BurntSushi/fst',
-        ],
-        [
-          'gems',
-          [
-            {
-              test: /rubygems\.org\/.+\/search/,
-              body: [
+          {
+            body: {
+              objects: [
                 {
-                  name: 'byebug',
+                  package: {
+                    date: '2021-02-20T15:42:16.891Z',
+                    links: { repository: 'https://github.com/lodash/lodash' },
+                  },
                 },
               ],
             },
-            {
-              test: /rubygems\.org\/.+\/gems/,
-              body: {
-                version_created_at: '2020-04-23T10:01:33.453Z',
-                source_code_uri: 'https://github.com/deivid-rodriguez/byebug',
-              },
-            },
-          ],
-          'https://github.com/deivid-rodriguez/byebug',
+          },
         ],
+        'https://github.com/lodash/lodash',
+      ],
+      [
+        ['crates', 'rus'],
         [
-          'pypi',
-          [
-            {
-              test: /pypi\.org/,
-              body: {
-                info: {
-                  project_urls: {
-                    'Source Code': 'https://github.com/pallets/flask/',
+          {
+            body: {
+              crates: [
+                {
+                  updated_at: '2021-06-06T11:00:31.172403+00:00',
+                  repository: 'https://github.com/BurntSushi/fst',
+                },
+              ],
+            },
+          },
+        ],
+        'https://github.com/BurntSushi/fst',
+      ],
+      [
+        ['gems', 'rub'],
+        [
+          {
+            test: /rubygems\.org\/.+\/search/,
+            body: [
+              {
+                name: 'byebug',
+              },
+            ],
+          },
+          {
+            test: /rubygems\.org\/.+\/gems/,
+            body: {
+              version_created_at: '2020-04-23T10:01:33.453Z',
+              source_code_uri: 'https://github.com/deivid-rodriguez/byebug',
+            },
+          },
+        ],
+        'https://github.com/deivid-rodriguez/byebug',
+      ],
+      [
+        ['pypi', 'pyt'],
+        [
+          {
+            test: /pypi\.org/,
+            body: {
+              info: {
+                project_urls: {
+                  'Source Code': 'https://github.com/pallets/flask/',
+                },
+                version: '2.0.2',
+              },
+              releases: {
+                '2.0.2': [
+                  {
+                    upload_time_iso_8601: '2021-10-04T14:34:54.817314Z',
                   },
-                  version: '2.0.2',
-                },
-                releases: {
-                  '2.0.2': [
-                    {
-                      upload_time_iso_8601: '2021-10-04T14:34:54.817314Z',
-                    },
-                  ],
-                },
+                ],
               },
             },
-          ],
-          'https://github.com/pallets/flask/',
+          },
         ],
-      ])('%s', async (scope, spyConf, url) => {
+        'https://github.com/pallets/flask/',
+      ],
+    ])('scoped %s', (scopes, spyConf, url) => {
+      test.each(scopes)('%s', async (scope) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         spyOnFetch(spyConf as any);
         const res = await search('__packagename__', scope);

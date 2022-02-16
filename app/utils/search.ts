@@ -153,24 +153,19 @@ export const scopes: Array<{ label: string; value: string }> = [
   { label: 'Pypi', value: 'pypi' },
 ];
 
-const scopeToFn: Record<
-  string,
-  (text: string) => Promise<SearchResult | null>
-> = {
-  npm: searchNpm,
-  crates: searchCrates,
-  gems: searchGems,
-  pypi: searchPypi,
-};
-
-const scopeToFnEntries = Object.entries(scopeToFn);
+const scopeMappings = [
+  { keywords: ['npm', 'javascript', 'typescript'], fn: searchNpm },
+  { keywords: ['crates', 'cargo', 'rust'], fn: searchCrates },
+  { keywords: ['gems', 'ruby'], fn: searchGems },
+  { keywords: ['pypi', 'egg', 'python'], fn: searchPypi },
+];
 
 export default async function search(name: string, scope = '') {
   const allRes = (
     await Promise.all(
-      scopeToFnEntries
-        .filter(([key]) => key.startsWith(scope))
-        .map(([, fn]) => fn(name)),
+      scopeMappings
+        .filter(({ keywords }) => keywords.some((kw) => kw.startsWith(scope)))
+        .map(({ fn }) => fn(name)),
     )
   ).filter((el): el is SearchResult => !!el);
 
