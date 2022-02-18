@@ -30,14 +30,14 @@ export const meta: MetaFunction = () => ({
   'og:title': 'git.pizza',
   'og:description': "Find any package's repository, now.",
   'og:url': 'https://git.pizza',
-  'og:image': '/logo.svg',
+  'og:image': '/logo.png',
   'og:site_name': 'git.pizza',
   'og:locale': 'en_US',
   'og:type': 'website',
   'twitter:card': 'summary_large_image',
   'twitter:title': 'git.pizza',
   'twitter:description': "Find any package's repository, now.",
-  'twitter:image': '/logo.svg',
+  'twitter:image': '/logo.png',
   'twitter:creator': '@knpwrs',
 });
 
