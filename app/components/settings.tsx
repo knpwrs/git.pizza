@@ -21,13 +21,11 @@ import plausible from '~/utils/plausible';
 
 const initialScopesCookie = (Cookies.get('scopes') ?? '').split(',');
 const initialScopeState = sortBy(
-  scopes
-    .slice(1)
-    .map((s) => ({
-      ...s,
-      active:
-        isEmpty(initialScopesCookie) || initialScopesCookie.includes(s.value),
-    })),
+  scopes.slice(1).map((s) => ({
+    ...s,
+    active:
+      isEmpty(initialScopesCookie) || initialScopesCookie.includes(s.value),
+  })),
   ({ value }) => {
     const idx = initialScopesCookie.indexOf(value);
     return idx > -1 ? idx : Infinity;
