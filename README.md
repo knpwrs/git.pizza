@@ -1,34 +1,50 @@
-# Welcome to Remix!
+# git.pizza
 
-- [Remix Docs](https://remix.run/docs)
+[git.pizza][gp] is a site which redirects you to the source code of a given
+package. Simply go to `git.pizza/packagename` and you will be redirected to the
+source code. You can also go directly to [git.pizza][gp] to use the search UI
+and change settings.
 
-## Deployment
+Currently [git.pizza][gp] supports the following package registries:
 
-After having run the `create-remix` command and selected "Vercel" as a deployment target, you only need to [import your Git repository](https://vercel.com/new) into Vercel, and it will be deployed.
+- [npm](https://npmjs.org)
+- [crates](https://crates.io)
+- [RubyGems.org](https://rubygems.org/)
+- [PyPI](https://pypi.org/)
 
-If you'd like to avoid using a Git repository, you can also deploy the directory by running [Vercel CLI](https://vercel.com/cli):
+Feel free to open issues requesting more registries!
 
-```sh
-npm i -g vercel
-vercel
+## Scoped Search
+
+You can scope your search to a particular package registry like so:
+
+```
+https://git.pizza/npm/packagename
+https://git.pizza/crates/packagename
+https://git.pizza/gems/packagename
+https://git.pizza/python/packagename
 ```
 
-It is generally recommended to use a Git repository, because future commits will then automatically be deployed by Vercel, through its [Git Integration](https://vercel.com/docs/concepts/git).
+You can scope to multiple package registries as well:
 
-## Development
-
-To run your Remix app locally, make sure your project's local dependencies are installed:
-
-```sh
-npm install
+```
+https://git.pizza/npm,crates/packagename
 ```
 
-Afterwards, start the Remix development server like so:
+And prefix matches on scope are supported. The following will search for both
+Ruby and Rust packages:
 
-```sh
-npm run dev
+```
+https://git.pizza/ru/packagename
 ```
 
-Open up [http://localhost:3000](http://localhost:3000) and you should be ready to go!
+## Fallback
 
-If you're used to using the `vercel dev` command provided by [Vercel CLI](https://vercel.com/cli) instead, you can also use that, but it's not needed.
+If the package you are looking for cannot be found, or the package registry
+doesn't have a repostiory linked, you will be redirected to a search on Github.
+
+## WHy git.pizza?
+
+Why not? It's memorable and it was available.
+
+[gp]: https://git.pizza
