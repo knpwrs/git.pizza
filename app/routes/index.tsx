@@ -3,8 +3,9 @@ import {
   Anchor,
   Box,
   Button,
+  Center,
   Container,
-  Group,
+  Grid,
   NativeSelect,
   Text,
   TextInput,
@@ -99,30 +100,40 @@ export default function MyApp() {
         alt="git.pizza logo"
       />
       <Form method="post">
-        <Group spacing="xs">
-          <ActionIcon onClick={() => toggleSettingsOpened()}>
-            <FiSliders />
-          </ActionIcon>
-          <Settings opened={settingsOpened} onClose={toggleSettingsOpened} />
-          <NativeSelect
-            name="scope"
-            data={scopes}
-            value={scopeValue}
-            onChange={setScopeValue}
-          />
-          <TextInput
-            name="name"
-            placeholder="Package Name"
-            value={nameValue}
-            onChange={setNameValue}
-            error={actionData?.nameError}
-            required
-          />
-          <Button type="submit" disabled={busy}>
-            Go!
-          </Button>
-        </Group>
+        <Grid sx={(theme) => ({ padding: theme.spacing.xs })}>
+          <Grid.Col span={1}>
+            <Center>
+              <ActionIcon onClick={() => toggleSettingsOpened()}>
+                <FiSliders />
+              </ActionIcon>
+            </Center>
+          </Grid.Col>
+          <Grid.Col span={11} sm={3}>
+            <NativeSelect
+              name="scope"
+              data={scopes}
+              value={scopeValue}
+              onChange={setScopeValue}
+            />
+          </Grid.Col>
+          <Grid.Col span={9} sm={6}>
+            <TextInput
+              name="name"
+              placeholder="Package Name"
+              value={nameValue}
+              onChange={setNameValue}
+              error={actionData?.nameError}
+              required
+            />
+          </Grid.Col>
+          <Grid.Col span={3} sm={2}>
+            <Button type="submit" disabled={busy} sx={{ width: '100%' }}>
+              Go!
+            </Button>
+          </Grid.Col>
+        </Grid>
       </Form>
+      <Settings opened={settingsOpened} onClose={toggleSettingsOpened} />
       {url ? (
         <Container sx={{ paddingTop: 50 }}>
           <Anchor href={url}>
