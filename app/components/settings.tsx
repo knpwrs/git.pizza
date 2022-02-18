@@ -17,6 +17,7 @@ import { FiMenu } from 'react-icons/fi';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { sortBy } from 'lodash';
 import { scopes } from '~/utils/search';
+import plausible from '~/utils/plausible';
 
 const initialScopesCookie = (Cookies.get('scopes') ?? '').split(',');
 const initialScopeState = sortBy(
@@ -39,13 +40,19 @@ export default function Settings(props: Props) {
   const ordered = mode === 'ordered';
 
   useEffect(() => {
+    plausible.trackEvent('settings opened');
+  }, []);
+
+  useEffect(() => {
+    const scopesValue = scopeState
+      .filter((scope) => ordered || scope.active)
+      .map((scope) => scope.value)
+      .join(',');
+
     Cookies.set('mode', mode, { sameSite: 'strict' });
-    Cookies.set(
-      'scopes',
-      scopeState
-        .filter((scope) => ordered || scope.active)
-        .map((scope) => scope.value),
-    );
+    Cookies.set('scopes', scopesValue);
+
+    plausible.trackEvent('settings changed', { props: { mode, scopesValue } });
   }, [mode, ordered, scopeState]);
 
   return (
