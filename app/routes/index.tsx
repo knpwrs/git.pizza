@@ -16,6 +16,7 @@ import {
   ActionFunction,
   Form,
   LinksFunction,
+  MetaFunction,
   redirect,
   useActionData,
   useTransition,
@@ -24,6 +25,21 @@ import sanitize from 'sanitize.css';
 import GhCorner from '~/components/gh-corner';
 import search, { scopes } from '~/utils/search';
 import Settings from '~/components/settings';
+
+export const meta: MetaFunction = () => ({
+  'og:title': 'git.pizza',
+  'og:description': "Find any package's repository, now.",
+  'og:url': 'https://git.pizza',
+  'og:image': '/logo.svg',
+  'og:site_name': 'git.pizza',
+  'og:locale': 'en_US',
+  'og:type': 'website',
+  'twitter:card': 'summary_large_image',
+  'twitter:title': 'git.pizza',
+  'twitter:description': "Find any package's repository, now.",
+  'twitter:image': '/logo.svg',
+  'twitter:creator': '@knpwrs',
+});
 
 export const links: LinksFunction = () => [
   {
