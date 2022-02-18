@@ -179,7 +179,7 @@ describe('search', () => {
   });
 
   describe('all together', () => {
-    describe('any', () => {
+    describe('newest', () => {
       test('npm is newest', async () => {
         spyOnFetch<ResponseJson>([
           {
@@ -255,12 +255,79 @@ describe('search', () => {
 
         expect(global.fetch).toBeCalledTimes(4);
       });
+    });
 
-      test('no results goes to github', async () => {
-        spyOnFetch([{ status: 404, body: {} }]);
-        const res = await search('foo');
-        expect(res).toMatchObject({ repo: 'https://github.com/search?q=foo' });
+    describe('ordered', () => {
+      test('first scope matches', async () => {
+        spyOnFetch<ResponseJson>([
+          {
+            test: /npmjs\.com/,
+            body: {
+              objects: [
+                {
+                  package: {
+                    date: '2021-02-20T15:42:16.891Z',
+                    links: { repository: 'https://github.com/lodash/lodash' },
+                  },
+                },
+              ],
+            },
+          },
+        ]);
+
+        const res = await search('lodash', 'npm,crates', 'ordered');
+
+        expect(res).toEqual({
+          repo: 'https://github.com/lodash/lodash',
+          timestamp: 1613835736891,
+        });
+
+        expect(global.fetch).toBeCalledTimes(1);
       });
+
+      test('second scope matches', async () => {
+        spyOnFetch<ResponseJson>([
+          {
+            test: /npmjs\.com/,
+            body: {
+              objects: [
+                {
+                  package: {
+                    date: '2017-02-07T03:58:00.320Z',
+                    links: {},
+                  },
+                },
+              ],
+            },
+          },
+          {
+            test: /crates\.io/,
+            body: {
+              crates: [
+                {
+                  updated_at: '2021-10-11T19:53:47.159715+00:00',
+                  repository: 'https://github.com/shssoichiro/zxcvbn-rs',
+                },
+              ],
+            },
+          },
+        ]);
+
+        const res = await search('zxcvbn', 'npm,crates', 'ordered');
+
+        expect(res).toEqual({
+          repo: 'https://github.com/shssoichiro/zxcvbn-rs',
+          timestamp: 1633982027159,
+        });
+
+        expect(global.fetch).toBeCalledTimes(2);
+      });
+    });
+
+    test('no results goes to github', async () => {
+      spyOnFetch([{ status: 404, body: {} }]);
+      const res = await search('foo');
+      expect(res).toMatchObject({ repo: 'https://github.com/search?q=foo' });
     });
 
     describe.each([

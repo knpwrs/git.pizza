@@ -1,4 +1,5 @@
 import {
+  ActionIcon,
   Anchor,
   Box,
   Button,
@@ -8,7 +9,8 @@ import {
   Text,
   TextInput,
 } from '@mantine/core';
-import { useInputState } from '@mantine/hooks';
+import { useInputState, useToggle } from '@mantine/hooks';
+import { FiSliders } from 'react-icons/fi';
 import { isString } from 'lodash';
 import {
   ActionFunction,
@@ -21,6 +23,7 @@ import {
 import sanitize from 'sanitize.css';
 import GhCorner from '~/components/gh-corner';
 import search, { scopes } from '~/utils/search';
+import Settings from '~/components/settings';
 
 export const links: LinksFunction = () => [
   {
@@ -52,6 +55,10 @@ export const action: ActionFunction = async ({ request }) => {
 export default function MyApp() {
   const [scopeValue, setScopeValue] = useInputState('');
   const [nameValue, setNameValue] = useInputState('');
+  const [settingsOpened, toggleSettingsOpened] = useToggle(false, [
+    true,
+    false,
+  ]);
   const transition = useTransition();
   const actionData = useActionData() ?? {};
   const busy = transition.state === 'submitting';
@@ -77,6 +84,10 @@ export default function MyApp() {
       />
       <Form method="post">
         <Group spacing="xs">
+          <ActionIcon onClick={() => toggleSettingsOpened()}>
+            <FiSliders />
+          </ActionIcon>
+          <Settings opened={settingsOpened} onClose={toggleSettingsOpened} />
           <NativeSelect
             name="scope"
             data={scopes}

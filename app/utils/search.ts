@@ -1,4 +1,4 @@
-import { maxBy } from 'lodash';
+import { maxBy, take } from 'lodash';
 import urlcat from 'urlcat';
 import memoize from 'memoizee';
 import ms from 'ms';
@@ -33,7 +33,7 @@ function dateStringToMs(date: string) {
 }
 
 export interface NpmResponseJson {
-  objects: Array<{ package: { date: string; links: { repository: string } } }>;
+  objects: Array<{ package: { date: string; links: { repository?: string } } }>;
 }
 
 export async function searchNpm(text: string): Promise<SearchResult | null> {
@@ -160,19 +160,43 @@ const scopeMappings = [
   { keywords: ['pypi', 'egg', 'python'], fn: searchPypi },
 ];
 
-export default async function search(name: string, scope = '') {
-  const allRes = (
-    await Promise.all(
-      scopeMappings
-        .filter(({ keywords }) => keywords.some((kw) => kw.startsWith(scope)))
-        .map(({ fn }) => fn(name)),
-    )
-  ).filter((el): el is SearchResult => !!el);
+export default async function search(
+  name: string,
+  scopesString = '',
+  mode = 'newest',
+) {
+  const scopes = take(scopesString.split(','), scopeMappings.length);
 
-  return (
-    (allRes.length > 0 && maxBy(allRes, 'timestamp')) || {
-      repo: urlcat('https://github.com/search', { q: name }),
-      timestamp: Date.now(),
+  if (mode === 'newest') {
+    const allRes = (
+      await Promise.all(
+        scopeMappings
+          .filter(({ keywords }) =>
+            keywords.some((kw) => scopes.some((scope) => kw.startsWith(scope))),
+          )
+          .map(({ fn }) => fn(name)),
+      )
+    ).filter((el): el is SearchResult => !!el);
+
+    if (allRes.length > 0) {
+      return maxBy(allRes, 'timestamp');
     }
-  );
+  }
+
+  if (mode === 'ordered') {
+    for (const scope of scopes) {
+      const mapping = scopeMappings.find((sm) =>
+        sm.keywords.some((kw) => kw.startsWith(scope)),
+      );
+      const res = await mapping?.fn(name);
+      if (res) {
+        return res;
+      }
+    }
+  }
+
+  return {
+    repo: urlcat('https://github.com/search', { q: name }),
+    timestamp: Date.now(),
+  };
 }
