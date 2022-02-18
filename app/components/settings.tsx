@@ -15,7 +15,7 @@ import Cookies from 'js-cookie';
 import { useEffect, useMemo } from 'react';
 import { FiMenu } from 'react-icons/fi';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
-import { sortBy } from 'lodash';
+import { isEmpty, sortBy } from 'lodash';
 import { scopes } from '~/utils/search';
 import plausible from '~/utils/plausible';
 
@@ -23,7 +23,11 @@ const initialScopesCookie = (Cookies.get('scopes') ?? '').split(',');
 const initialScopeState = sortBy(
   scopes
     .slice(1)
-    .map((s) => ({ ...s, active: initialScopesCookie.includes(s.value) })),
+    .map((s) => ({
+      ...s,
+      active:
+        isEmpty(initialScopesCookie) || initialScopesCookie.includes(s.value),
+    })),
   ({ value }) => {
     const idx = initialScopesCookie.indexOf(value);
     return idx > -1 ? idx : Infinity;
