@@ -43,7 +43,7 @@ https://git.pizza/ru/packagename
 If the package you are looking for cannot be found, or the package registry
 doesn't have a repostiory linked, you will be redirected to a search on Github.
 
-## WHy git.pizza?
+## Why git.pizza?
 
 Why not? It's memorable and it was available.
 
